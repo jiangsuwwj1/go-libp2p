@@ -2,7 +2,7 @@ package config
 
 import (
 	"context"
-	"crypto/rand"
+	"fmt"
 
 	bhost "github.com/libp2p/go-libp2p/p2p/host/basic"
 
@@ -32,6 +32,9 @@ type AddrsFactory = bhost.AddrsFactory
 type NATManagerC func(inet.Network) bhost.NATManager
 
 // Config describes a set of settings for a libp2p node
+//
+// This is *not* a stable interface. Use the options defined in the root
+// package.
 type Config struct {
 	Transports         []TptC
 	Muxers             []MsMuxC
@@ -50,7 +53,9 @@ type Config struct {
 	NATManager         NATManagerC
 }
 
-// NewNode constructs a new libp2p Host based from the Config.
+// NewNode constructs a new libp2p Host from the Config.
+//
+// This function consumes the config. Do not reuse it (really!).
 func (cfg *Config) NewNode(ctx context.Context) (host.Host, error) {
 	// Check this early. Prevents us from even *starting* without verifying this.
 	if pnet.ForcePrivateNetwork && cfg.Protector == nil {
@@ -61,34 +66,27 @@ func (cfg *Config) NewNode(ctx context.Context) (host.Host, error) {
 		return nil, pnet.ErrNotInPrivateNetwork
 	}
 
-	// If no key was given, generate a random 2048 bit RSA key
-	privKey := cfg.PeerKey
 	if cfg.PeerKey == nil {
-		priv, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
-		if err != nil {
-			return nil, err
-		}
-		privKey = priv
+		return nil, fmt.Errorf("no peer key specified")
 	}
 
 	// Obtain Peer ID from public key
-	pid, err := peer.IDFromPublicKey(privKey.GetPublic())
+	pid, err := peer.IDFromPublicKey(cfg.PeerKey.GetPublic())
 	if err != nil {
 		return nil, err
 	}
 
 	// Create a new blank peerstore if none was passed in
-	ps := cfg.Peerstore
-	if ps == nil {
-		ps = pstore.NewPeerstore()
+	if cfg.Peerstore == nil {
+		return nil, fmt.Errorf("no peerstore specified")
 	}
 	if !cfg.Insecure {
-		ps.AddPrivKey(pid, cfg.PeerKey)
-		ps.AddPubKey(pid, cfg.PeerKey.GetPublic())
+		cfg.Peerstore.AddPrivKey(pid, cfg.PeerKey)
+		cfg.Peerstore.AddPubKey(pid, cfg.PeerKey.GetPublic())
 	}
 
 	// TODO: Make the swarm implementation configurable.
-	swrm := swarm.NewSwarm(ctx, pid, ps, cfg.Reporter)
+	swrm := swarm.NewSwarm(ctx, pid, cfg.Peerstore, cfg.Reporter)
 	if cfg.Filters != nil {
 		swrm.Filters = cfg.Filters
 	}

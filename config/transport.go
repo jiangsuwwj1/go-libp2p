@@ -1,13 +1,9 @@
 package config
 
 import (
-	"reflect"
-
 	host "github.com/libp2p/go-libp2p-host"
 	transport "github.com/libp2p/go-libp2p-transport"
 	tptu "github.com/libp2p/go-libp2p-transport-upgrader"
-	tcp "github.com/libp2p/go-tcp-transport"
-	ws "github.com/libp2p/go-ws-transport"
 )
 
 // TptC is the type for libp2p transport constructors. You probably won't ever
@@ -15,19 +11,7 @@ import (
 // constructor to TransportConstructor.
 type TptC func(h host.Host, u *tptu.Upgrader) (transport.Transport, error)
 
-var transportArgTypes = map[reflect.Type]constructor{
-	upgraderType:  func(h host.Host, u *tptu.Upgrader) interface{} { return u },
-	hostType:      func(h host.Host, u *tptu.Upgrader) interface{} { return h },
-	networkType:   func(h host.Host, u *tptu.Upgrader) interface{} { return h.Network() },
-	muxType:       func(h host.Host, u *tptu.Upgrader) interface{} { return u.Muxer },
-	securityType:  func(h host.Host, u *tptu.Upgrader) interface{} { return u.Secure },
-	protectorType: func(h host.Host, u *tptu.Upgrader) interface{} { return u.Protector },
-	filtersType:   func(h host.Host, u *tptu.Upgrader) interface{} { return u.Filters },
-	peerIDType:    func(h host.Host, u *tptu.Upgrader) interface{} { return h.ID() },
-	privKeyType:   func(h host.Host, u *tptu.Upgrader) interface{} { return h.Peerstore().PrivKey(h.ID()) },
-	pubKeyType:    func(h host.Host, u *tptu.Upgrader) interface{} { return h.Peerstore().PubKey(h.ID()) },
-	pstoreType:    func(h host.Host, u *tptu.Upgrader) interface{} { return h.Peerstore() },
-}
+var transportArgTypes = argTypes
 
 // TransportConstructor uses reflection to turn a function that constructs a
 // transport into a TptC.
@@ -70,16 +54,13 @@ func TransportConstructor(tpt interface{}) (TptC, error) {
 }
 
 func makeTransports(h host.Host, u *tptu.Upgrader, tpts []TptC) ([]transport.Transport, error) {
-	if len(tpts) > 0 {
-		transports := make([]transport.Transport, len(tpts))
-		for i, tC := range tpts {
-			t, err := tC(h, u)
-			if err != nil {
-				return nil, err
-			}
-			transports[i] = t
+	transports := make([]transport.Transport, len(tpts))
+	for i, tC := range tpts {
+		t, err := tC(h, u)
+		if err != nil {
+			return nil, err
 		}
-		return transports, nil
+		transports[i] = t
 	}
-	return []transport.Transport{tcp.NewTCPTransport(u), ws.New(u)}, nil
+	return transports, nil
 }

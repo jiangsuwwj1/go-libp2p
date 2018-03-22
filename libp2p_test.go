@@ -41,7 +41,7 @@ func makeRandomHost(t *testing.T, port int) (host.Host, error) {
 		ListenAddrStrings(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port)),
 		Identity(priv),
 		DefaultTransports,
-		DefaultMuxer,
+		DefaultMuxers,
 		DefaultSecurity,
 		NATPortMap(),
 	}

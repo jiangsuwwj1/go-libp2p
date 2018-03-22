@@ -5,37 +5,11 @@ import (
 	"reflect"
 	"runtime"
 
-	security "github.com/libp2p/go-conn-security"
-	crypto "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
-	pnet "github.com/libp2p/go-libp2p-interface-pnet"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
-	transport "github.com/libp2p/go-libp2p-transport"
 	tptu "github.com/libp2p/go-libp2p-transport-upgrader"
-	filter "github.com/libp2p/go-maddr-filter"
-	mux "github.com/libp2p/go-stream-muxer"
 )
 
-var (
-	// interfaces
-	errorType     = reflect.TypeOf((*error)(nil)).Elem()
-	hostType      = reflect.TypeOf((*host.Host)(nil)).Elem()
-	networkType   = reflect.TypeOf((*inet.Network)(nil)).Elem()
-	transportType = reflect.TypeOf((*transport.Transport)(nil)).Elem()
-	muxType       = reflect.TypeOf((*mux.Transport)(nil)).Elem()
-	securityType  = reflect.TypeOf((*security.Transport)(nil)).Elem()
-	protectorType = reflect.TypeOf((*pnet.Protector)(nil)).Elem()
-	filtersType   = reflect.TypeOf((*filter.Filters)(nil))
-	privKeyType   = reflect.TypeOf((*crypto.PrivKey)(nil)).Elem()
-	pubKeyType    = reflect.TypeOf((*crypto.PubKey)(nil)).Elem()
-	pstoreType    = reflect.TypeOf((*pstore.Peerstore)(nil)).Elem()
-
-	// concrete types
-	peerIDType   = reflect.TypeOf((peer.ID)(""))
-	upgraderType = reflect.TypeOf((*tptu.Upgrader)(nil))
-)
+var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 // checks if a function returns either the specified type or the specified type
 // and an error.
